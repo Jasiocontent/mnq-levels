@@ -1,0 +1,60 @@
+//@version=5
+indicator("MNQ Key Levels & Gamma Flip", overlay=true)
+
+// --- Inputs ---
+gammaFlipInput = input.float(0.0, "Gamma Flip Level (MNQ)", tooltip="Enter the MNQ Gamma Flip level calculated by the Python script.")
+
+// --- Constants ---
+vxnSymbol = "CBOE:VXN" // Nasdaq Volatility Index
+
+// --- Data Fetching ---
+vxn = request.security(vxnSymbol, "D", close)
+weeklyOpen = request.security(syminfo.tickerid, "W", open, lookahead=barmerge.lookahead_on)
+
+// --- 3:00 AM NY Anchor Logic ---
+nyHour = hour(time, "America/New_York")
+var float dailyAnchor = na
+var int lastDay = na
+currentDay = dayofmonth(time, "America/New_York")
+
+if currentDay != lastDay
+    dailyAnchor := na
+    lastDay := currentDay
+
+// Capture Open at or after 3:00 AM NY
+if na(dailyAnchor) and (nyHour >= 3)
+    dailyAnchor := open
+
+// Fallback for Daily/Weekly charts
+if timeframe.isdaily or timeframe.isweekly or timeframe.ismonthly
+    dailyAnchor := open
+
+// --- Calculations ---
+dailyVolFactor = (vxn / 100.0) / math.sqrt(252)
+weeklyVolFactor = (vxn / 100.0) / math.sqrt(52)
+
+// Daily Expected Moves (Anchored to 3 AM)
+calcPrice = not na(dailyAnchor) ? dailyAnchor : open
+dailyHigh = calcPrice * (1 + dailyVolFactor)
+dailyLow = calcPrice * (1 - dailyVolFactor)
+
+// Weekly Expected Moves (Anchored to Std Weekly Open)
+weeklyHigh = weeklyOpen * (1 + weeklyVolFactor)
+weeklyLow = weeklyOpen * (1 - weeklyVolFactor)
+
+// --- Plotting ---
+plot(gammaFlipInput > 0 ? gammaFlipInput : na, "Gamma Flip", color=color.white, linewidth=2, style=plot.style_linebr)
+plot(dailyHigh, "Daily High Exp", color=color.green, linewidth=1, style=plot.style_circles)
+plot(dailyLow, "Daily Low Exp", color=color.red, linewidth=1, style=plot.style_circles)
+plot(weeklyHigh, "Weekly High Exp", color=color.lime, linewidth=2)
+plot(weeklyLow, "Weekly Low Exp", color=color.maroon, linewidth=2)
+
+//Labels
+if barstate.islast
+    if gammaFlipInput > 0
+        label.new(bar_index, gammaFlipInput, "Gamma Flip: " + str.tostring(gammaFlipInput, "#.##"), color=color.white, style=label.style_label_left, textcolor=color.black)
+    
+    label.new(bar_index, dailyHigh, "Daily High: " + str.tostring(dailyHigh, "#.##"), color=color.green, style=label.style_none, textcolor=color.green)
+    label.new(bar_index, dailyLow, "Daily Low: " + str.tostring(dailyLow, "#.##"), color=color.red, style=label.style_none, textcolor=color.red)
+    label.new(bar_index, weeklyHigh, "Weekly High: " + str.tostring(weeklyHigh, "#.##"), color=color.lime, style=label.style_none, textcolor=color.lime)
+    label.new(bar_index, weeklyLow, "Weekly Low: " + str.tostring(weeklyLow, "#.##"), color=color.maroon, style=label.style_none, textcolor=color.maroon)

@@ -1,0 +1,29 @@
+[
+  {
+    "client": {
+      "salutation": "Herr",      // Options: "Herr", "Frau"
+      "firstname": "Max",
+      "lastname": "Muster",
+      "birthdate": "01.01.1980", // Format: DD.MM.YYYY
+      "ahv_number": "756.1234.5678.90",
+      "address": {
+        "street": "Musterstrasse",
+        "number": "1",
+        "zip": "9000",
+        "city": "St. Gallen"
+      }
+    },
+    "agent": {
+      "firstname": "Hans",
+      "lastname": "Vermittler",
+      "company": "Treuhand AG",
+      "email": "hans.vermittler@example.com",
+      "phone": "071 123 45 67",
+      "street": "Bürostrasse",
+      "number": "10",
+      "zip": "9000",
+      "city": "St. Gallen"
+    },
+    "attachment_path": "C:\\Users\\jasio\\.gemini\\antigravity\\scratch\\sva_automation\\files\\vollmacht_muster.pdf"
+  }
+]

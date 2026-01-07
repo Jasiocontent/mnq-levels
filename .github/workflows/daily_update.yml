@@ -1,0 +1,40 @@
+name: Daily Trading Levels Update
+
+on:
+  schedule:
+    # Runs at 08:00 UTC (3:00 AM EST) every Monday through Friday
+    - cron: '0 8 * * 1-5'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  update-levels:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Analysis Script
+        run: |
+          python trading_levels.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add levels.json
+          # Only commit if levels.json has changed
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update trading levels [skip ci]" && git push)

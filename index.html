@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNQ Trading Levels</title>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --card-bg: #181b21;
+            --text-main: #e0e0e0;
+            --text-muted: #8b949e;
+            --accent: #3b82f6;
+            --call-color: #10b981;
+            --put-color: #ef4444;
+            --flip-color: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .flip-section {
+            text-align: center;
+            border: 1px solid var(--flip-color);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .level-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--flip-color);
+            margin: 0.5rem 0;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+
+        .level-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+            font-feature-settings: "tnum";
+        }
+
+        .val-high { color: var(--call-color); }
+        .val-low { color: var(--put-color); }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        #last-updated {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        /* Loading state */
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>MNQ Trading Levels</h1>
+            <div class="subtitle">Daily Gamma Flip & Expected Moves</div>
+        </header>
+
+        <!-- Main Gamma Flip Card -->
+        <div class="card flip-section">
+            <div class="level-label">MNQ Gamma Flip Level</div>
+            <div class="level-value" id="flip-val">---</div>
+            <button class="copy-btn" onclick="copyFlip()">Copy for TradingView</button>
+        </div>
+
+        <!-- Weekly Levels -->
+        <div class="card">
+            <div class="level-label" style="text-align: center; margin-bottom: 1rem;">Weekly Expected Move</div>
+            <div class="grid">
+                <div class="stat-box">
+                    <div class="level-label">High</div>
+                    <div class="stat-val val-high" id="weekly-high">---</div>
+                </div>
+                <div class="stat-box">
+                    <div class="level-label">Low</div>
+                    <div class="stat-val val-low" id="weekly-low">---</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Levels -->
+        <div class="card">
+            <div class="level-label" style="text-align: center; margin-bottom: 1rem;">Daily Expected Move</div>
+            <div class="grid">
+                <div class="stat-box">
+                    <div class="level-label">High</div>
+                    <div class="stat-val val-high" id="daily-high">---</div>
+                </div>
+                <div class="stat-box">
+                    <div class="level-label">Low</div>
+                    <div class="stat-val val-low" id="daily-low">---</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="last-updated">Waiting for data...</div>
+    </div>
+
+    <script>
+        const formatPrice = (price) => {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(price);
+        };
+
+        async function loadData() {
+            try {
+                // Fetch the JSON file generated by the Python script
+                // In production, this file sits right next to index.html
+                const r = await fetch('levels.json');
+                if (!r.ok) throw new Error("Could not fetch levels.json");
+                
+                const data = await r.json();
+                const levels = data.levels;
+                
+                document.getElementById('flip-val').textContent = formatPrice(levels["Gamma Flip"]);
+                
+                document.getElementById('weekly-high').textContent = formatPrice(levels["Weekly High"]);
+                document.getElementById('weekly-low').textContent = formatPrice(levels["Weekly Low"]);
+                
+                document.getElementById('daily-high').textContent = formatPrice(levels["Daily High"]);
+                document.getElementById('daily-low').textContent = formatPrice(levels["Daily Low"]);
+
+                const date = new Date(data.timestamp);
+                document.getElementById('last-updated').textContent = `Last Updated: ${date.toLocaleString()}`;
+                
+            } catch (e) {
+                console.error(e);
+                document.getElementById('last-updated').textContent = "Error loading data. Is levels.json present?";
+            }
+        }
+
+        function copyFlip() {
+            const val = document.getElementById('flip-val').textContent.replace(/,/g, '');
+            if(val === '---') return;
+            navigator.clipboard.writeText(val);
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = originalText, 2000);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
