@@ -1,17 +1,17 @@
 {
-    "timestamp": "2026-01-30T08:40:59.837232",
+    "timestamp": "2026-02-02T08:44:30.223978",
     "levels": {
         "Gamma Flip": 0,
-        "Spot Price": 25733.75,
-        "Daily High": 25733.766210738762,
-        "Daily Low": 25733.733789261238,
-        "Weekly High": 25733.785686290437,
-        "Weekly Low": 25733.714313709563
+        "Spot Price": 0,
+        "Daily High": 0,
+        "Daily Low": 0,
+        "Weekly High": 0,
+        "Weekly Low": 0
     },
     "qqq_data": {
-        "spot": 629.4299926757812,
+        "spot": 621.8699951171875,
         "flip": 0,
-        "daily_em": 0.0003965036257965058,
-        "weekly_em": 0.0008728623511182512
+        "daily_em": 0.07690294392375989,
+        "weekly_em": 0.16929399903056228
     }
 }
